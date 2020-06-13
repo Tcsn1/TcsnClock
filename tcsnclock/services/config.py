@@ -264,7 +264,7 @@ class XmlConfigInfo:
                 try:
                     time = timeutils.parseDateTimeStringToTime(timeString)
                 except timeutils.DateTimeFormatErrorException:
-                    raise XmlConfigurationFileFormatErrorException("<reminder>节点 " + text + " time属性格式错误：" + time)
+                    raise XmlConfigurationFileFormatErrorException("<reminder>节点 " + text + " time属性格式错误：" + timeString)
                 result.append([time, text])
             result.sort(key=lambda t: t[0])
             cls.reminders = result

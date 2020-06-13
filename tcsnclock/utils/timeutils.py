@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 
 import time
+import utils.stringutils as stringutils
 
 
 class DateFormatErrorException(Exception):
@@ -34,10 +35,26 @@ def exceedNow(dateTimeFormatString):
 
 
 def parseDateTimeStringToTime(dateTimeFormatString):
+    dateTimeFormatString = dateTimeFormatString.replace("\r", " ").replace("\n", " ").replace("\t", " ")
+    dateTimeFormatString = stringutils.loopReplace(dateTimeFormatString, "  ", " ")  # 将多余的分隔符归为一个
+    sp = dateTimeFormatString.split(" ")
+    if len(sp) != 2:
+        raise DateTimeFormatErrorException(str(dateTimeFormatString) + "  时间日期格式无效  格式不对，请按照\"日期 时间\"的格式输入")
     try:
-        return time.mktime(time.strptime(dateTimeFormatString.replace("：", ":"), "%Y.%m.%d %H:%M:%S"))
+        date = parseDateStringToList(sp[0])
+    except DateFormatErrorException:
+        raise DateTimeFormatErrorException(str(dateTimeFormatString) + "  时间日期格式无效  日期格式错误：" + str(sp[0]))
+    if date[0] == 'unknown':
+        raise DateTimeFormatErrorException(str(dateTimeFormatString) + "  时间日期格式无效  日期格式错误：" + str(date) + "年份不能为空")
+    try:
+        t = parseTimeStringToList(sp[1])
+    except TimeFormatErrorException:
+        raise DateTimeFormatErrorException(str(dateTimeFormatString) + "  时间日期格式无效  时间格式错误：" + str(sp[1]))
+    try:
+        s = str(date[0]) + "." + str(date[1]) + "." + str(date[2]) + " " + str(t[0]) + ":" + str(t[1]) + ":" + str(t[2])
+        return time.mktime(time.strptime(s, "%Y.%m.%d %H:%M:%S"))
     except ValueError:
-        raise DateTimeFormatErrorException(dateTimeFormatString + "格式无效")
+        raise DateTimeFormatErrorException(str(dateTimeFormatString) + "  时间日期格式无效  存在无法转换为数字的字符")
 
 
 def parseDateStringToList(dateFormatString):
@@ -47,9 +64,9 @@ def parseDateStringToList(dateFormatString):
     如果格式正确，将会返回[year,month,day]列表
 
     :param dateFormatString: 传入 "年.月.日" 或 "月.日" 字符串
-    :return:返回[year,month,day]列表
+    :return:返回[year,month,day]列表，如果年未传入，[0]的值为'unknown'
     """
-    t = dateFormatString.replace('-', '.').split(".")
+    t = dateFormatString.replace(" ", "").replace('-', '.').split(".")
     try:
         if len(t) == 3:
             year = int(t[0])
@@ -104,7 +121,7 @@ def parseTimeStringToList(timeFormatString):
     :param timeFormatString: "时:分:秒" 或 "时:分" 或 "时" 的字符串
     :return: 返回[hour,minute,second]列表
     """
-    t = timeFormatString.replace("：", ":").split(':')
+    t = timeFormatString.replace(" ", "").replace("：", ":").split(':')
     hour = 0
     minute = 0
     second = 0
@@ -179,18 +196,19 @@ def parseWeekStringToList(weekFormatString):
     :return: 返回 [1,2,3,6,7]
     """
     weeks = weekFormatString.replace("[", "").replace("]", "").replace("；", ";") \
-        .replace(";", ",").replace(".", ",").replace("，", ",").split(",")
+        .replace(";", ",").replace("，", ",").split(",")
     result = []
     try:
         for w in weeks:
             if w.replace(" ", "").replace("\t", "") == "":
                 continue
-            i = int(w)
+            i = int(w)  # 如果是浮点数字符串转整型，也会抛出ValueError异常
             if i < 1 or i > 7:
-                raise WeekFormatErrorException("星期格式错误：" + weeks + "中存在 >7或<1的数字 " + i + " ，请检查星期格式")
-            result.append(i)
+                raise WeekFormatErrorException("星期格式错误：" + str(weeks) + "中存在 >7或<1的数字 " + str(i) + " ，请检查星期格式")
+            if not (i in result):  # 去重
+                result.append(i)
     except ValueError:
-        raise WeekFormatErrorException("星期格式错误：" + weeks + "中存在无法转换为数字的字符 " + w + " ，请检查星期格式")
+        raise WeekFormatErrorException("星期格式错误：" + str(weeks) + "中存在无法转换为星期整数的字符 " + str(w) + " ，请检查星期格式")
     return result
 
 
