@@ -40,7 +40,7 @@ class BirthdayService(monitor.MonitorChildControllableThread):
                             <= time.time() + self.listeningFlushTime / 2 \
                             and self.shouldRunning and XmlConfigInfo.Birthday.enable:
                         todayTimeStruct = time.localtime(time.time())
-                        preTimeStruct = time.localtime(time.time() - preRemindDay * 24 * 60 * 60)
+                        preTimeStruct = time.localtime(time.time() + preRemindDay * 24 * 60 * 60)
                         for b in birthdays:
                             if b[0][1] == todayTimeStruct[1] and b[0][2] == todayTimeStruct[2]:
                                 Msg.birthdayMessage(b, 0)
